@@ -24,7 +24,10 @@ import com.simats.sympcareai.data.response.*
 import com.simats.sympcareai.utils.DateTimeUtils
 import androidx.compose.ui.draw.clip
 import com.simats.sympcareai.ui.TriageComponent
-import io.noties.markwon.Markwon
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,8 +40,6 @@ fun ReportAnalysisScreen(
     var fileResult by remember { mutableStateOf<FileAnalysisResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    val markwon = remember { Markwon.create(context) }
 
     fun formatDateTime(isoString: String?): String {
         return DateTimeUtils.formatToKolkataTime(isoString)
@@ -125,7 +126,7 @@ fun ReportAnalysisScreen(
                                 onClick = {
                                     val url = fileResult?.fileUrl!!
                                     // Ensure URL is absolute. Backend often returns relative paths for media.
-                                    val fullUrl = if (url.startsWith("http")) url else "http://10.31.167.156:8000$url"
+                                    val fullUrl = if (url.startsWith("http")) url else "http://10.94.242.156:8000$url"
                                     val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(fullUrl))
                                     context.startActivity(intent)
                                 }
@@ -223,14 +224,11 @@ fun ReportAnalysisScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
-                        AndroidView(
-                            factory = { context -> TextView(context).apply { 
-                                setTextColor(android.graphics.Color.BLACK)
-                                textSize = 15f
-                            } },
-                            update = { textView ->
-                                markwon.setMarkdown(textView, fileResult?.report ?: "No analysis content available.")
-                            }
+                        Text(
+                            text = formatMedicalReport(fileResult?.report ?: "No analysis content available."),
+                            fontSize = 15.sp,
+                            lineHeight = 22.sp,
+                            color = Color.Black
                         )
                     }
                 }

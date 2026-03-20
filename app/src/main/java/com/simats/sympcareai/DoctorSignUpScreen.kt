@@ -22,11 +22,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.White
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -177,9 +179,35 @@ fun DoctorSignUpScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(brush = backgroundBrush),
-        contentAlignment = Alignment.Center
+            .background(brush = backgroundBrush)
+            .systemBarsPadding() // Avoid status bar/camera overlap
+            .imePadding() // Adjust for keyboard
+
     ) {
+        // --- TOP BAR WITH LOGOS AND TAB ---
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .align(Alignment.TopCenter),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left Logo (sse-logo-1)
+            Image(
+                painter = painterResource(id = R.drawable.`sse_logo_1`),
+                contentDescription = "Saveetha Logo",
+                modifier = Modifier.size(50.dp)
+            )
+
+            // Right Logo (sse-logo-2)
+            Image(
+                painter = painterResource(id = R.drawable.`sse_logo_2`),
+                contentDescription = "SSE Logo",
+                modifier = Modifier.size(50.dp)
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -233,7 +261,16 @@ fun DoctorSignUpScreen(
             // Phone Number
             SignUpTextField(
                 value = phoneNumber,
-                onValueChange = { phoneNumber = it },
+                onValueChange = { input ->
+
+                    // Allow only digits and max 10 characters
+                    val filtered = input.filter { it.isDigit() }.take(10)
+
+                    // Ensure first digit is between 6–9 (Indian mobile rule)
+                    if (filtered.isEmpty() || filtered.first() in '6'..'9') {
+                        phoneNumber = filtered
+                    }
+                },
                 label = "Phone Number",
                 placeholder = "Enter your phone number",
                 icon = Icons.Default.Phone,
@@ -377,8 +414,8 @@ fun DoctorSignUpScreen(
 
             // Footer
             Text(
-                text = "By creating an account, you agree to our Terms of Service and Privacy Policy",
-                color = Color.White,
+                text = "2026 © Powered by SIMATS Engineering",
+                color = Color.White.copy(alpha = 0.8f),
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 16.dp)

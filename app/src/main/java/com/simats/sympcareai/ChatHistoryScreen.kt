@@ -46,9 +46,20 @@ fun ChatHistoryScreen(
 
     LaunchedEffect(patientId) {
         try {
-            val response = com.simats.sympcareai.network.RetrofitClient.apiService.getChatHistory(patientId)
+            // 1. Fetch Patient Name for filtering
+            val accountInfoResponse = RetrofitClient.apiService.getPatientAccountInfo(mapOf("patient_id" to patientId))
+            val fullName = if (accountInfoResponse.isSuccessful) accountInfoResponse.body()?.fullName else null
+
+            // 2. Fetch Chat History
+            val response = RetrofitClient.apiService.getChatHistory(patientId)
             if (response.isSuccessful) {
-                historyList = response.body()?.history ?: emptyList()
+                val fullHistory = response.body()?.history ?: emptyList()
+                // 3. Filter history to show only the logged-in patient's records
+                historyList = if (fullName != null) {
+                    fullHistory.filter { it.user == fullName }
+                } else {
+                    fullHistory // Fallback if name fetch fails (though it might show others)
+                }
             } else {
                 errorMessage = "Failed to load history: ${response.code()}"
             }
@@ -58,6 +69,7 @@ fun ChatHistoryScreen(
             isLoading = false
         }
     }
+
 
     Scaffold(
         bottomBar = {

@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 fun DoctorLoginScreen(
     onSignUpClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
-    onLoginSuccess: (String, String) -> Unit
+    onLoginSuccess: (String, String) -> Unit,
 ) {
     var doctorId by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -71,9 +71,31 @@ fun DoctorLoginScreen(
             .fillMaxSize()
             .background(brush = backgroundBrush)
             .systemBarsPadding() // Avoid status bar/camera overlap
-            .imePadding(), // Adjust for keyboard
-        contentAlignment = Alignment.Center
+            .imePadding() // Adjust for keyboard
     ) {
+        // --- TOP BAR WITH LOGOS AND TAB ---
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .align(Alignment.TopCenter),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left Logo (sse-logo-1)
+            Image(
+                painter = painterResource(id = R.drawable.`sse_logo_1`),
+                contentDescription = "Saveetha Logo",
+                modifier = Modifier.size(50.dp)
+            )
+            // Right Logo (sse-logo-2)
+            Image(
+                painter = painterResource(id = R.drawable.`sse_logo_2`),
+                contentDescription = "SSE Logo",
+                modifier = Modifier.size(50.dp)
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -82,7 +104,7 @@ fun DoctorLoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top // content starts from top
         ) {
-            Spacer(modifier = Modifier.height(120.dp)) // Push content down below tabs
+            Spacer(modifier = Modifier.height(130.dp)) // Push content down below tabs
 
             // Logo
             Surface(
@@ -105,10 +127,10 @@ fun DoctorLoginScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = "Sign in to continue your health journey",
+                text = "SympCare AI",
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    fontSize = 16.sp,
-                    color = Color(0xFF424242) // Dark Gray
+                    fontSize = 30.sp,
+                    color = Color.White
                 )
             )
             
@@ -311,10 +333,10 @@ fun DoctorLoginScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Terms
+            // Powered by
             Text(
-                text = "By signing in, you agree to our Terms of Service and Privacy Policy",
-                color = Color.Black.copy(alpha = 0.4f), // Faint text
+                text = "2026 © Powered by SIMATS Engineering",
+                color = Color.White.copy(alpha = 0.8f), // Faint text
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 16.dp)

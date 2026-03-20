@@ -103,18 +103,7 @@ fun SymptomAnalysisResultScreen(
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(disease.name, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                                 }
-                                Surface(
-                                    color = Color(0xFFE8EAF6),
-                                    shape = RoundedCornerShape(16.dp)
-                                ) {
-                                    Text(
-                                        text = AIEngine.formatProbability(disease.probability),
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF3F51B5)
-                                    )
-                                }
+
                             }
                         }
                     }

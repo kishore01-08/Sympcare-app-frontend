@@ -2,6 +2,7 @@ package com.simats.sympcareai
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -38,7 +39,8 @@ fun PatientLoginScreen(
     onSignUpClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     onLoginSuccess: (String, String) -> Unit,
-    onProfileIncomplete: (String, String) -> Unit
+    onProfileIncomplete: (String, String) -> Unit,
+    //onDoctorTabClick: () -> Unit = {}
 ) {
     var patientId by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -72,9 +74,32 @@ fun PatientLoginScreen(
             .fillMaxSize()
             .background(brush = backgroundBrush)
             .systemBarsPadding() // Avoid status bar/camera overlap
-            .imePadding(), // Adjust for keyboard
-        contentAlignment = Alignment.Center
+            .imePadding() // Adjust for keyboard
     ) {
+        // --- TOP BAR WITH LOGOS AND TAB ---
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .align(Alignment.TopCenter),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left Logo (sse-logo-1)
+            Image(
+                painter = painterResource(id = R.drawable.`sse_logo_1`),
+                contentDescription = "Saveetha Logo",
+                modifier = Modifier.size(50.dp)
+            )
+
+            // Right Logo (sse-logo-2)
+            Image(
+                painter = painterResource(id = R.drawable.`sse_logo_2`),
+                contentDescription = "SSE Logo",
+                modifier = Modifier.size(50.dp)
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -83,7 +108,7 @@ fun PatientLoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top // content starts from top
         ) {
-            Spacer(modifier = Modifier.height(120.dp)) // Push content down below tabs
+            Spacer(modifier = Modifier.height(130.dp)) // Push content down below tabs
 
             // Logo
             Surface(
@@ -106,10 +131,11 @@ fun PatientLoginScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = "Sign in to continue your health journey",
+                text = "SympCare AI",
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    fontSize = 16.sp,
-                    color = Color(0xFF37474F) // Dark Gray/Blue
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White // Dark Gray/Blue
                 )
             )
 
@@ -324,10 +350,10 @@ fun PatientLoginScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Terms
+            // Powered by
             Text(
-                text = "By signing in, you agree to our Terms of Service and Privacy Policy",
-                color = Color.Black.copy(alpha = 0.4f),
+                text = "2026 © Powered by SIMATS Engineering",
+                color = Color.White.copy(alpha = 0.8f),
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 16.dp)

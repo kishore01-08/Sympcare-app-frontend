@@ -98,9 +98,8 @@ data class FileAnalysisResponse(
     @SerializedName("uploaded_at") val uploadedAt: String? = null,
     val triage: Int? = null,
     @SerializedName("severity_score") val severityScore: Float? = null,
-    @SerializedName("main_disease") val mainDisease: String? = null,
-    @SerializedName("possible_diseases") val possibleDiseases: List<DiseaseRisk>? = null,
-    val symptoms: List<String>? = null
+    val symptoms: List<String>? = null,
+    @SerializedName("possible_diseases") val possibleDiseases: List<DiseaseRisk>? = null
 )
 
 data class FileUploadResponse(

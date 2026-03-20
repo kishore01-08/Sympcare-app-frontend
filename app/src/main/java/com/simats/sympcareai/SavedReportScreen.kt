@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.simats.sympcareai.data.response.FileAnalysisResponse
 import com.simats.sympcareai.network.RetrofitClient
-import io.noties.markwon.Markwon
 import retrofit2.Response
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -40,7 +39,6 @@ fun SavedReportScreen(
     var fileResult by remember { mutableStateOf<FileAnalysisResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    val markwon = remember { Markwon.create(context) }
 
     LaunchedEffect(reportId) {
         if (reportId != -1) {
@@ -192,14 +190,11 @@ fun SavedReportScreen(
                 // Main Analysis Card
                 SectionCard(title = "Detailed AI Analysis", color = Color(0xFFEF6C00)) {
                     val reportText = result.report ?: "No detailed analysis available."
-                    AndroidView(
-                        factory = { context -> TextView(context).apply { 
-                            setTextColor(android.graphics.Color.BLACK)
-                            textSize = 15f
-                        } },
-                        update = { textView ->
-                            markwon.setMarkdown(textView, reportText)
-                        },
+                    Text(
+                        text = formatMedicalReport(reportText),
+                        fontSize = 15.sp,
+                        lineHeight = 22.sp,
+                        color = Color.Black,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

@@ -51,15 +51,12 @@ fun ChatScreen(
         history?.symptoms ?: selectedSymptoms
     }
     
-    // Backend Questions State
-    var questions by remember { mutableStateOf<List<String>>(emptyList()) }
-    var currentQuestionIndex by remember { mutableIntStateOf(0) }
-    var isLoadingQuestions by remember { mutableStateOf(history == null) }
+    // Conversation State
     var isAnalyzing by remember { mutableStateOf(false) }
     var analysisError by remember { mutableStateOf<String?>(null) }
     
-    // Collected Answers for Analysis
-    val collectedAnswers = remember { mutableStateMapOf<String, String>() }
+    // Final collected answers received from backend
+    var finalAnswers by remember { mutableStateOf<Map<String, String>?>(null) }
     
     val scope = rememberCoroutineScope()
 
@@ -70,7 +67,7 @@ fun ChatScreen(
         val request = mapOf(
             "patient_id" to patientId,
             "symptoms" to selectedSymptoms,
-            "answers" to collectedAnswers.toMap()
+            "answers" to (finalAnswers ?: emptyMap())
         )
         
         scope.launch {
@@ -111,26 +108,22 @@ fun ChatScreen(
                 else -> "Unknown"
             }
             messages.add(ChatMessage("Triage: $triageText", isUser = false))
-            
-            isLoadingQuestions = false
         } else if (!isReadOnly) {
             val request = mapOf(
-                "patient_id" to patientId,
                 "symptoms" to selectedSymptoms
             )
-            isLoadingQuestions = false
             try {
-                val response = RetrofitClient.apiService.getQuestions(request)
-                if (response.isSuccessful) {
-                    questions = response.body()?.questions ?: emptyList()
-                    if (questions.isNotEmpty()) {
+                val response = RetrofitClient.apiService.startChat(request)
+                if (response.isSuccessful && response.body() != null) {
+                    val firstQ = response.body()?.question
+                    if (firstQ != null) {
                         val symptomText = if (selectedSymptoms.isNotEmpty()) " for ${selectedSymptoms.joinToString(", ")}" else ""
-                        messages.add(ChatMessage("Hello! I'm here to help with your symptoms$symptomText. ${questions[0]}", isUser = false))
+                        messages.add(ChatMessage("Hello! I'm here to help with your symptoms$symptomText. $firstQ", isUser = false))
                     } else {
-                        messages.add(ChatMessage("Hello! I'm here to help. How can I assist you today?", isUser = false))
+                        messages.add(ChatMessage("Knowledge base connected, but no initial questions were found.", isUser = false))
                     }
                 } else {
-                    messages.add(ChatMessage("Hello! I'm having trouble connecting to my knowledge base. Please try describing your symptoms anyway.", isUser = false))
+                    messages.add(ChatMessage("Hello! I'm having trouble connecting to my knowledge base. Please try communicating your symptoms anyway.", isUser = false))
                 }
             } catch (e: Exception) {
                 messages.add(ChatMessage("Network error. Please check your connection.", isUser = false))
@@ -149,31 +142,35 @@ fun ChatScreen(
         if (message.isNotBlank()) {
             val userMsg = message
             messages.add(ChatMessage(userMsg, isUser = true))
-            
-            // Map questions to keys for analysis and history
-            if (currentQuestionIndex < questions.size) {
-                val q = questions[currentQuestionIndex]
-                // Store with actual question text as key for history display
-                collectedAnswers[q] = userMsg
-                
-                // Also store with specific keys for legacy backend analysis logic
-                if (q.contains("severe", ignoreCase = true) || q.contains("1 to 10", ignoreCase = true)) {
-                    collectedAnswers["pain"] = userMsg
-                } else if (q.contains("how many days", ignoreCase = true) || q.contains("how long", ignoreCase = true)) {
-                    collectedAnswers["days"] = userMsg
-                }
-            }
-
             message = ""
-
-            // AI Response Logic
-            if (currentQuestionIndex < questions.size - 1) {
-                currentQuestionIndex++
-                val nextQ = questions[currentQuestionIndex]
-                messages.add(ChatMessage(nextQ, isUser = false))
-            } else {
-                messages.add(ChatMessage("Thank you. I have gathered all the information needed for analysis.", isUser = false))
-                messages.add(ChatMessage("Please click 'Analyze' to generate your health report.", isUser = false))
+            
+            val request = mapOf("answer" to userMsg)
+            
+            scope.launch {
+                try {
+                    val response = RetrofitClient.apiService.answerQuestion(request)
+                    if (response.isSuccessful) {
+                        val data = response.body()
+                        if (data != null) {
+                            if (data.status == "repeat") {
+                                val errMessage = data.message ?: "Invalid answer."
+                                val lastQ = messages.lastOrNull { !it.isUser }?.text ?: data.question ?: "Please repeat."
+                                messages.add(ChatMessage(errMessage, isUser = false))
+                                messages.add(ChatMessage(lastQ, isUser = false))
+                            } else if (data.status == "next") {
+                                messages.add(ChatMessage(data.question ?: "Next?", isUser = false))
+                            } else if (data.status == "complete") {
+                                finalAnswers = data.answers
+                                messages.add(ChatMessage("Thank you. I have gathered all the information needed for analysis.", isUser = false))
+                                messages.add(ChatMessage("Please click 'Analyze' to generate your health report.", isUser = false))
+                            }
+                        }
+                    } else {
+                         messages.add(ChatMessage("API Error: Backend connection failed.", isUser = false))
+                    }
+                } catch (e: Exception) {
+                     messages.add(ChatMessage("Network Drop: Please ensure you are connected.", isUser = false))
+                }
             }
         }
     }

@@ -127,7 +127,7 @@ fun AboutAppScreen(
             
             // Copyright
             Text(
-                text = "© 2024 Simats Inc. All rights reserved.",
+                text = "2026 © Powered by SIMATS Engineering",
                 fontSize = 12.sp,
                 color = Color.Gray.copy(alpha = 0.6f),
                 modifier = Modifier.padding(bottom = 24.dp)

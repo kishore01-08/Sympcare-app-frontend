@@ -210,13 +210,7 @@ fun AIPatientAnalysisScreen(
                     } else {
                         aiResult?.possibleDiseases?.forEach { disease ->
                             val prob = disease.probability ?: 0f
-                            AnalysisConditionItem(
-                                name = disease.name,
-                                severity = if (prob > 0.5f) "Highly Likely" else "Possible",
-                                color = if (prob > 0.5f) Color(0xFFFFCDD2) else Color(0xFFFFE0B2),
-                                textColor = if (prob > 0.5f) Color(0xFFD32F2F) else Color(0xFFF57C00),
-                                probability = AIEngine.formatProbability(prob)
-                            )
+
                             Spacer(modifier = Modifier.height(8.dp))
                         } ?: run {
                             Text("No specific conditions identified", fontSize = 14.sp)

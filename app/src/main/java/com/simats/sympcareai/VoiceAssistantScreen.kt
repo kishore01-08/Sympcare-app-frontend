@@ -58,11 +58,10 @@ fun VoiceAssistantScreen(
     val messages = remember { mutableStateListOf<VoiceMessage>() }
     val listState = rememberLazyListState()
 
-    var questions by remember { mutableStateOf<List<String>>(emptyList()) }
-    var currentQuestionIndex by remember { mutableIntStateOf(0) }
     var isLoadingQuestions by remember { mutableStateOf(true) }
-    
-    val collectedAnswers = remember { mutableStateMapOf<String, String>() }
+
+    // Final collected answers received from backend
+    var finalAnswers by remember { mutableStateOf<Map<String, String>?>(null) }
 
     var isAnalyzing by remember { mutableStateOf(false) }
     var analysisError by remember { mutableStateOf<String?>(null) }
@@ -76,7 +75,7 @@ fun VoiceAssistantScreen(
         val request = mapOf(
             "patient_id" to patientId,
             "symptoms" to selectedSymptoms,
-            "answers" to collectedAnswers.toMap()
+            "answers" to (finalAnswers ?: emptyMap())
         )
         
         scope.launch {
@@ -107,17 +106,22 @@ fun VoiceAssistantScreen(
 
     LaunchedEffect(Unit) {
         val request = mapOf(
-            "patient_id" to patientId,
             "symptoms" to selectedSymptoms
         )
         isLoadingQuestions = true
         try {
-            val response = RetrofitClient.apiService.getQuestions(request)
-            if (response.isSuccessful) {
-                questions = response.body()?.questions ?: emptyList()
+            val response = RetrofitClient.apiService.startChat(request)
+            if (response.isSuccessful && response.body() != null) {
+                val firstQ = response.body()?.question
+                if (firstQ != null) {
+                    val symptomText = if (selectedSymptoms.isNotEmpty()) " for ${selectedSymptoms.joinToString(", ")}" else ""
+                    val initialGreeting = "Hello! I'm here to help with your symptoms$symptomText. $firstQ"
+                    // Wait for TTS internally if it's slow, or just queue messages
+                    speakAndAddMessage(initialGreeting)
+                }
             }
         } catch (e: Exception) {
-            // Ignore failure for questions
+            speakAndAddMessage("Backend connection failed.")
         }
         isLoadingQuestions = false
     }
@@ -127,10 +131,9 @@ fun VoiceAssistantScreen(
             tts = TextToSpeech(context) { status ->
                 if (status == TextToSpeech.SUCCESS) {
                     tts?.language = Locale.US
-                    if (messages.isEmpty() && questions.isNotEmpty()) {
-                        val symptomText = if (selectedSymptoms.isNotEmpty()) " for ${selectedSymptoms.joinToString(", ")}" else ""
-                        val initialGreeting = "Hello! I'm here to help with your symptoms$symptomText. ${questions[0]}"
-                        speakAndAddMessage(initialGreeting)
+                    // Flush newly added messages to TTS if they load early
+                    if (messages.isNotEmpty()) {
+                        messages.forEach { if(!it.isUser) speakText(tts, it.text) }
                     }
                 }
             }
@@ -158,21 +161,33 @@ fun VoiceAssistantScreen(
         if (text.isNotBlank()) {
             messages.add(VoiceMessage(text, isUser = true))
             
-            if (currentQuestionIndex < questions.size) {
-                val q = questions[currentQuestionIndex]
-                when {
-                    q.contains("severe", ignoreCase = true) || q.contains("1 to 10", ignoreCase = true) -> collectedAnswers["pain"] = text
-                    q.contains("how many days", ignoreCase = true) || q.contains("how long", ignoreCase = true) -> collectedAnswers["days"] = text
-                    else -> collectedAnswers["q_${currentQuestionIndex}"] = text
+            val request = mapOf("answer" to text)
+            
+            scope.launch {
+                try {
+                    val response = RetrofitClient.apiService.answerQuestion(request)
+                    if (response.isSuccessful) {
+                        val data = response.body()
+                        if (data != null) {
+                            if (data.status == "repeat") {
+                                val errMessage = data.message ?: "Invalid."
+                                val lastQMsg = messages.lastOrNull { !it.isUser }?.text ?: data.question ?: "Please repeat."
+                                val justQ = lastQMsg.replace(Regex("^.*?[.?!]\\s+"), "").replace(Regex("^None "), "")
+                                
+                                speakAndAddMessage("$errMessage ${data.question ?: justQ}")
+                            } else if (data.status == "next") {
+                                speakAndAddMessage(data.question ?: "Next?")
+                            } else if (data.status == "complete") {
+                                finalAnswers = data.answers
+                                speakAndAddMessage("Thank you. I have gathered all the information needed for analysis. Please click Analyse to view your report.")
+                            }
+                        }
+                    } else {
+                        speakAndAddMessage("API Error: Backend connection failed.")
+                    }
+                } catch (e: Exception) {
+                    speakAndAddMessage("Network Drop: Please ensure you are connected.")
                 }
-            }
-
-            if (currentQuestionIndex < questions.size - 1) {
-                currentQuestionIndex++
-                 val nextQuestion = questions[currentQuestionIndex]
-                 speakAndAddMessage(nextQuestion)
-            } else {
-                speakAndAddMessage("Thank you. I have gathered all the information needed for analysis. Please click Analyse to view your report.")
             }
         }
     }

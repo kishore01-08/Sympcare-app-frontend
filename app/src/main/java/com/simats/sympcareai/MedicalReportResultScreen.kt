@@ -215,7 +215,7 @@ fun MedicalReportResultScreen(
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = fileResult?.report ?: "No analysis available.",
+                            text = formatMedicalReport(fileResult?.report ?: "No analysis available."),
                             fontSize = 15.sp,
                             lineHeight = 22.sp,
                             color = Color.Black.copy(alpha = 0.8f)
@@ -226,7 +226,7 @@ fun MedicalReportResultScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Disease Risks
-                if (!fileResult?.possibleDiseases.isNullOrEmpty()) {
+                if (fileResult?.possibleDiseases?.isNotEmpty() == true) {
                     Text("Potential Insights", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Gray)
                     Spacer(modifier = Modifier.height(12.dp))
                     fileResult?.possibleDiseases?.forEach { disease ->

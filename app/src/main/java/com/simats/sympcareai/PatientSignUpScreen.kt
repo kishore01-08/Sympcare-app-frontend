@@ -16,6 +16,8 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -177,9 +179,34 @@ fun PatientSignUpScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(brush = backgroundBrush),
-        contentAlignment = Alignment.Center
-    ) {
+            .background(brush = backgroundBrush)
+            .systemBarsPadding() // Avoid status bar/camera overlap
+            .imePadding() // Adjust for keyboard
+    ) {        // --- TOP BAR WITH LOGOS AND TAB ---
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .align(Alignment.TopCenter),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left Logo (sse-logo-1)
+            Image(
+                painter = painterResource(id = R.drawable.`sse_logo_1`),
+                contentDescription = "Saveetha Logo",
+                modifier = Modifier.size(50.dp)
+            )
+
+            // Right Logo (sse-logo-2)
+            Image(
+                painter = painterResource(id = R.drawable.`sse_logo_2`),
+                contentDescription = "SSE Logo",
+                modifier = Modifier.size(50.dp)
+            )
+        }
+
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -233,7 +260,14 @@ fun PatientSignUpScreen(
             // Phone Number
             SignUpTextField(
                 value = phoneNumber,
-                onValueChange = { phoneNumber = it },
+                onValueChange = { input ->
+                    val filtered = input.filter { it.isDigit() }.take(10)
+
+                    // Ensure first digit is 6-9
+                    if (filtered.isEmpty() || filtered.first() in '6'..'9') {
+                        phoneNumber = filtered
+                    }
+                },
                 label = "Phone Number",
                 placeholder = "Enter your phone number",
                 icon = Icons.Default.Phone,
@@ -385,8 +419,8 @@ fun PatientSignUpScreen(
 
             // Footer
             Text(
-                text = "By creating an account, you agree to our Terms of Service and Privacy Policy",
-                color = Color.White,
+                text = "2026 © Powered by SIMATS Engineering",
+                color = Color.White.copy(alpha = 0.8f),
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 16.dp)

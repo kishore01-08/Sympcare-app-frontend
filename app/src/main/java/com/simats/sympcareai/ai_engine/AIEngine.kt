@@ -35,10 +35,6 @@ object AIEngine {
     /**
      * Formats a probability value (0.0 - 1.0) into a percentage string.
      */
-    fun formatProbability(prob: Float?): String {
-        if (prob == null) return "N/A"
-        return "${(prob * 100).toInt()}%"
-    }
 
     /**
      * Prepares symptom data for display or logging.

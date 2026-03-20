@@ -117,8 +117,11 @@ interface ApiService {
     @POST("ai/save-symptoms/")
     suspend fun saveSymptoms(@Body request: Map<String, Any>): Response<GenericStatusResponse> // {"symptoms": ["..."], "patient_id": "..."}
 
-    @POST("ai/questions/")
-    suspend fun getQuestions(@Body request: Map<String, @JvmSuppressWildcards Any>): Response<QuestionsResponse> // {"patient_id": "...", "symptoms": [...]}
+    @POST("ai/start_chat/")
+    suspend fun startChat(@Body request: Map<String, @JvmSuppressWildcards Any>): Response<com.simats.sympcareai.data.response.ChatServerResponse> 
+
+    @POST("ai/answer_question/")
+    suspend fun answerQuestion(@Body request: Map<String, @JvmSuppressWildcards Any>): Response<com.simats.sympcareai.data.response.ChatServerResponse> 
 
     @POST("ai/analyze/")
     suspend fun analyzeAI(@Body request: Map<String, @JvmSuppressWildcards Any>): Response<AIAnalysisResponse> // {"patient_id": "...", "answers": {...}, "symptoms": [...]}

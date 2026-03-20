@@ -16,6 +16,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
 import com.simats.sympcareai.data.response.AIAnalysisResponse
 import com.simats.sympcareai.ai_engine.AIEngine
 
@@ -23,7 +27,10 @@ import com.simats.sympcareai.ai_engine.AIEngine
 fun SectionCard(title: String, color: Color, content: @Composable () -> Unit) {
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
-             Box(modifier = Modifier.width(4.dp).height(16.dp).background(color, RoundedCornerShape(2.dp)))
+             Box(modifier = Modifier
+                 .width(4.dp)
+                 .height(16.dp)
+                 .background(color, RoundedCornerShape(2.dp)))
              Spacer(modifier = Modifier.width(8.dp))
              Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
         }
@@ -50,7 +57,10 @@ fun ConditionItem(title: String, risk: String, color: Color, modifier: Modifier 
         modifier = modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-             Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(color))
+             Box(modifier = Modifier
+                 .size(8.dp)
+                 .clip(CircleShape)
+                 .background(color))
              Spacer(modifier = Modifier.height(8.dp))
              Text(title, fontWeight = FontWeight.Bold, fontSize = 14.sp)
              Text(risk, fontSize = 12.sp, color = color)
@@ -78,10 +88,12 @@ fun AnalysisResultView(result: AIAnalysisResponse) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val triageColor = AIEngine.getTriageColor(result.triage ?: 3)
-                Box(modifier = Modifier.size(12.dp).background(triageColor, CircleShape))
+                Box(modifier = Modifier
+                    .size(12.dp)
+                    .background(triageColor, CircleShape))
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "AI System Analysis",
+                    text = "AI Symptom Analysis",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = Color.Black
@@ -130,19 +142,7 @@ fun AnalysisResultView(result: AIAnalysisResponse) {
                 }
             }
             
-            if (!result.possibleDiseases.isNullOrEmpty()) {
-                Spacer(modifier = Modifier.height(20.dp))
-                Text("Differential Analysis", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                result.possibleDiseases?.take(3)?.forEach { disease ->
-                    AnalysisConditionItemSimple(
-                        name = disease.name,
-                        prob = AIEngine.formatProbability(disease.probability)
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                }
-            }
+
         }
     }
 }
@@ -161,6 +161,46 @@ fun AnalysisConditionItemSimple(name: String, prob: String) {
         ) {
             Text(text = name, fontSize = 13.sp, color = Color.Black)
             Text(text = prob, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF009688))
+        }
+    }
+}
+
+fun formatMedicalReport(text: String): AnnotatedString {
+    return buildAnnotatedString {
+        val lines = text.split("\n")
+        lines.forEachIndexed { index, line ->
+            var currentLine = line.trim()
+            
+            // Remove Markdown bold symbols **
+            currentLine = currentLine.replace("**", "").replace("*", "")
+            
+            when {
+                // Heading (starts with #)
+                currentLine.startsWith("#") -> {
+                    val headingText = currentLine.replace(Regex("^#+\\s*"), "")
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Color.Black)) {
+                        append(headingText)
+                    }
+                }
+                // Parameter name (contains :)
+                currentLine.contains(":") -> {
+                    val parts = currentLine.split(":", limit = 2)
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = Color.Black)) {
+                        append(parts[0])
+                        append(": ")
+                    }
+                    if (parts.size > 1) {
+                        append(parts[1].trim())
+                    }
+                }
+                else -> {
+                    append(currentLine)
+                }
+            }
+            
+            if (index < lines.size - 1) {
+                append("\n")
+            }
         }
     }
 }
